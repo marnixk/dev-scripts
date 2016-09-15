@@ -1,0 +1,58 @@
+#!/bin/bash
+
+#
+#	Author: Marnix Kok <marnix@xinsolutions.co.nz>
+#	
+#	Purpose:
+#			
+#		Create a merge branch out of the current branch and merge develop
+#		into it. Will take into account if a merge branch currently exists.
+#
+#
+
+BN_PRE=merge
+BN_POST=-To-Dev
+
+CURRENT_BRANCH=`git status -b -s --porcelain | cut -d'.' -f1 | cut -d' ' -f2`
+
+# on merge branch?
+if [[ $CURRENT_BRANCH == "merge/"* ]]; then
+
+	ORIGINAL_BRANCH=`git branch | grep -e '^\*' | cut -d' ' -f2 | sed -e "s/merge\///" -e "s/-To-Dev//"`
+	ORIGINAL_EXISTS=`git branch | grep $ORIGINAL_BRANCH | wc -l`
+
+	# merge branch exists?
+	if [[ "$ORIGINAL_EXISTS" == "0" ]]; then
+		echo "[fatal]: No original branch for this branch exists, expected branch named: '$ORIGINAL_BRANCH'"
+		exit
+	fi
+
+
+	echo ""
+	echo "|> Checking out original branch: '$ORIGINAL_BRANCH'"
+	echo ""
+
+	git checkout $ORIGINAL_BRANCH
+	exit
+fi
+
+# not on merge, are we on feature or bugfix branch?
+if [[ $CURRENT_BRANCH != "feature/"* && $CURRENT_BRANCH != "bugfix/"* ]]; then
+	echo "[fatal]: Not on merge branch, feature or bugfix branch. Current branch: '$CURRENT_BRANCH'"
+	exit
+fi
+
+MERGE_BRANCH=${BN_PRE}/${CURRENT_BRANCH}${BN_POST}
+MERGE_EXISTS=`git branch | grep $MERGE_BRANCH | wc -l`
+
+if [[ "$MERGE_EXISTS" == "0" ]]; then 
+	echo "[fatal]: No merge branch for this branch exists, expected branch named: '$MERGE_BRANCH'"
+	exit
+fi
+
+
+echo ""
+echo "|> Checking out merge branch: '$MERGE_BRANCH'"
+echo ""
+
+git checkout $MERGE_BRANCH

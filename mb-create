@@ -1,0 +1,55 @@
+#!/bin/bash
+
+#
+#	Author: Marnix Kok <marnix@xinsolutions.co.nz>
+#	
+#	Purpose:
+#			
+#		Create a merge branch out of the current branch and merge develop
+#		into it. Will take into account if a merge branch currently exists.
+#
+#
+
+BN_PRE=merge
+BN_POST=-To-Dev
+
+CURRENT_BRANCH=`git status -b -s --porcelain | cut -d'.' -f1 | cut -d' ' -f2`
+
+DST=develop
+MERGE_BRANCH=${BN_PRE}/${CURRENT_BRANCH}${BN_POST}
+
+# already on merge branch?
+if [[ $CURRENT_BRANCH == "merge/"* ]]; then
+	echo "[fatal]: Already on a merge branch, aborting."
+	exit
+fi
+
+if [[ $CURRENT_BRANCH != "feature/"* && $CURRENT_BRANCH != "bugfix/"* ]]; then
+	echo "[fatal]: Not on feature or bugfix branch. Current branch: '$CURRENT_BRANCH'"
+	exit
+fi
+
+echo ""
+echo "|> Creating Merge branch "
+echo ""
+
+# starting merge branch process
+echo "Feature branch: ${CURRENT_BRANCH}"
+echo "Merge branch: $MERGE_BRANCH"
+echo "Are you sure you want to continue? If not, press CTRL-C."
+read 
+
+git checkout $DST
+git pull origin $DST
+git checkout $CURRENT_BRANCH
+git checkout -b $MERGE_BRANCH
+git merge $DST
+
+echo ".. COMPLETE .. "
+echo ""
+echo "Merge branch created. If any conflicts were shown, please resolve them and commit your changes."
+echo ""
+echo "To push them use:"
+echo " $ git commit -a"
+echo " $ git push origin $MERGE_BRANCH"
+echo ""
